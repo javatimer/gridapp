@@ -34,6 +34,29 @@ export class App {
     users = computed(() => this.usersResource.value() ?? []);
     isError = signal<boolean>(false);
 
+    sortColumn = signal<'name' | 'age'>('name');
+    sortDirection = signal<'asc' | 'desc' | null>(null);
+
+    search = signal('');
+    filteredUsers = computed(() => {
+        const query = this.search().trim().toLowerCase();
+        const result = query ? this.users().filter(user => user.name.toLowerCase().includes(query)) : [...this.users()];
+        const direction = this.sortDirection();
+
+        if (!direction) {
+            return result;
+        }
+
+        const column = this.sortColumn();
+
+        result.sort((user1, user2) => {
+            const comparison: number = column === 'name' ? user1.name.localeCompare(user2.name) : user1.age - user2.age;
+            return direction === 'asc' ? comparison : -comparison;
+        });
+
+        return result;
+    });
+
     // Геттер для получения массива (rxResource хранит данные в свойстве .value)
     /*
       get users(): User[] {
@@ -125,6 +148,33 @@ export class App {
             this.usersResource.value.update((current) => (current ? current.slice(0, -1) : []));
         }
         this.resetForm();
+    }
+
+    onSearch(event: Event) {
+        const input = event.target as HTMLInputElement;
+        this.search.set(input.value);
+    }
+
+    sort(column: 'name' | 'age') {
+        if (this.sortColumn() !== column) {
+            this.sortColumn.set(column);
+            this.sortDirection.set('asc');
+            return;
+        }
+
+        switch (this.sortDirection()) {
+            case null:
+                this.sortDirection.set('asc');
+                break;
+
+            case 'asc':
+                this.sortDirection.set('desc');
+                break;
+
+            case 'desc':
+                this.sortDirection.set(null);
+                break;
+        }
     }
 
     private showTransientStatus(message: string, errorStatus: boolean, duration: number = 3000) {

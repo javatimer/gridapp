@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const express = require('express');
 
 // условная база данных
@@ -5,6 +6,18 @@ const users = [
   { _id: crypto.randomUUID(), name: 'Tom', age: 22 },
   { _id: crypto.randomUUID(), name: 'Bob', age: 44 },
   { _id: crypto.randomUUID(), name: 'Sam', age: 28 },
+  { _id: crypto.randomUUID(), name: 'Alice', age: 31 },
+  { _id: crypto.randomUUID(), name: 'John', age: 37 },
+  { _id: crypto.randomUUID(), name: 'Emma', age: 26 },
+  { _id: crypto.randomUUID(), name: 'Michael', age: 42 },
+  { _id: crypto.randomUUID(), name: 'Sarah', age: 29 },
+  { _id: crypto.randomUUID(), name: 'David', age: 35 },
+  { _id: crypto.randomUUID(), name: 'Olivia', age: 24 },
+  { _id: crypto.randomUUID(), name: 'James', age: 51 },
+  { _id: crypto.randomUUID(), name: 'Sophia', age: 33 },
+  { _id: crypto.randomUUID(), name: 'Daniel', age: 27 },
+  { _id: crypto.randomUUID(), name: 'Emily', age: 39 },
+  { _id: crypto.randomUUID(), name: 'Robert', age: 46 },
 ];
 
 const app = express();
@@ -17,6 +30,8 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, PATCH, PUT, POST, DELETE, OPTIONS');
   next(); // передаем обработку запроса дальше
 });
+
+app.get('/', async (_, res) => res.send('Hello world!'));
 
 app.get('/api/users', async (_, res) => res.send(users));
 

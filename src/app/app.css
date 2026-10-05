@@ -177,6 +177,11 @@ input[readonly] {
   cursor: not-allowed;
 }
 
+.search-input {
+  width: 100%;
+  max-width: 1000px;
+}
+
 /* Подсветка невалидных полей, которые пользователь уже затронул или они пустые */
 input.ng-invalid.ng-touched {
   border-color: var(--danger-color);
