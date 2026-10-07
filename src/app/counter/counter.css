@@ -1,0 +1,40 @@
+.counter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.counter-value {
+    min-width: 160px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--card-bg);
+    text-align: center;
+}
+
+.counter-value strong {
+    font-size: 1.25rem;
+}
+
+.counter-value .odd {
+    margin-left: 0.4rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.counter-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.counter-actions button {
+    min-width: 90px;
+}
+
+.counter-box {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    width: fit-content;
+}

@@ -1,180 +1,100 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { User } from './user';
 import { UserService } from './user.service';
+import { User } from './model/user';
+import { Counter } from './counter/counter';
+import { UserTable } from './user-table/user-table';
 
 @Component({
     selector: 'my-app',
-    imports: [FormsModule],
+    standalone: true,
+    imports: [Counter, UserTable],
     templateUrl: './app.html',
-    styleUrl: './app.css',
+    styleUrl: './app.css'
 })
 export class App {
     private readonly userService = inject(UserService);
 
-    // 1. Реактивный ресурс для загрузки пользователей (заменяет loadUsers и ngOnInit)
-    // Он автоматически сделает GET-запрос при старте приложения
-    usersResource = rxResource({
-        stream: () => this.userService.getUsers(),
-    });
-
-    // Пример на будущее (с параметрами):
-    /*
-      usersResource = rxResource({
-          params: () => ({ search: this.searchQuery() }), // вместо request
-          stream: ({ params }) => this.userService.getUsers(params.search)
-      });
-      */
-
-    // 2. Сигналы для состояния компонента
-    editedUser = signal<User | null>(null);
-    isNewRecord = signal<boolean>(false);
-    statusMessage = signal<string>('');
-    users = computed(() => this.usersResource.value() ?? []);
-    isError = signal<boolean>(false);
-
-    sortColumn = signal<'name' | 'age'>('name');
+    page = signal(1);
+    pageSize = 5;
+    search = signal('');
+    sort = signal<'name' | 'age'>('name');
     sortDirection = signal<'asc' | 'desc' | null>(null);
 
-    search = signal('');
-    filteredUsers = computed(() => {
-        const query = this.search().trim().toLowerCase();
-        const result = query ? this.users().filter(user => user.name.toLowerCase().includes(query)) : [...this.users()];
-        const direction = this.sortDirection();
+    usersResource = rxResource({ // rxResource следит за этими сигналами
+        params: () => ({
+            page: this.page(),
+            size: this.pageSize,
+            search: this.search(),
+            sort: this.sort(),
+            direction: this.sortDirection()
+        }),
 
-        if (!direction) {
-            return result;
-        }
-
-        const column = this.sortColumn();
-
-        result.sort((user1, user2) => {
-            const comparison: number = column === 'name' ? user1.name.localeCompare(user2.name) : user1.age - user2.age;
-            return direction === 'asc' ? comparison : -comparison;
-        });
-
-        return result;
+        stream: ({ params }) => {
+            return this.userService.getUsers(
+                params.page,
+                params.size,
+                params.search,
+                params.sort,
+                params.direction
+            );
+        },
     });
 
-    // Геттер для получения массива (rxResource хранит данные в свойстве .value)
-    /*
-      get users(): User[] {
-          return this.usersResource.value() ?? [];
-      }
-      */
+    users = computed(() => this.usersResource.hasValue() ? this.usersResource.value().content : []);
+    isLoading = computed(() => this.usersResource.isLoading());
+    isResourceError = computed(() => this.usersResource.status() === 'error' || !!this.usersResource.error());
+    totalPages = computed(() => this.usersResource.hasValue() ? this.usersResource.value().totalPages : 0);
+    totalElements = computed(() => this.usersResource.hasValue() ? this.usersResource.value().totalElements : 0);
 
-    addUser() {
-        const newUser: User = { _id: '', name: '', age: 0 };
+    statusMessage = signal('');
+    isError = signal(false);
 
-        this.usersResource.value.update((current) => (current ? [...current, newUser] : [newUser]));
+    handleSave(userToSave: User) {
+        const request$ = userToSave._id === '' ? this.userService.createUser(userToSave) : this.userService.updateUser(userToSave);
 
-        this.editedUser.set(newUser);
-        this.isNewRecord.set(true);
+        request$.subscribe({
+            next: () => {
+                this.showTransientStatus('Данные успешно сохранены', false);
+                this.usersResource.reload();
+            },
+
+            error: () => {
+                this.showTransientStatus('Ошибка при сохранении: сервер недоступен', true, 6000);
+            }
+        });
     }
 
-    editUser(user: User) {
-        // Создаем копию объекта в сигнал
-        this.editedUser.set({ _id: user._id, name: user.name, age: user.age });
-    }
-
-    isEditing(user: User): boolean {
-        const currentEdit = this.editedUser();
-
-        if (!currentEdit) {
-            return false;
-        }
-
-        if (currentEdit === user) {
-            return true;
-        }
-
-        if (user._id === '') {
-            return false;
-        }
-
-        return currentEdit._id === user._id;
-    }
-
-    saveUser() {
-        const userToSave = this.editedUser();
-        if (!userToSave) return;
-
-        if (this.isNewRecord()) {
-            this.userService.createUser(userToSave).subscribe({
-                next: () => {
-                    this.showTransientStatus('Данные успешно добавлены', false);
-                    this.usersResource.reload();
-                    this.resetForm();
-                },
-                error: () => {
-                    // Ошибку тоже пропускаем через метод, но увеличиваем время до 6 секунд
-                    this.showTransientStatus('Ошибка при добавлении: сервер недоступен', true, 6000);
-                },
-            });
-        } else {
-            this.userService.updateUser(userToSave).subscribe({
-                next: () => {
-                    this.showTransientStatus('Данные успешно обновлены', false);
-                    this.usersResource.reload();
-                    this.resetForm();
-                },
-                error: () => {
-                    this.showTransientStatus('Ошибка при обновлении: изменения не сохранены', true, 6000);
-                },
-            });
-        }
-    }
-
-    deleteUser(user: User) {
+    handleDelete(user: User) {
         const confirmed = confirm(`Удалить пользователя "${user.name}"?`);
-        if (!confirmed) {
-            return;
-        }
+
+        if (!confirmed) return;
+
         this.userService.deleteUser(user._id).subscribe({
             next: () => {
                 this.showTransientStatus('Данные успешно удалены', false);
                 this.usersResource.reload();
             },
+
             error: () => {
-                this.showTransientStatus('Не удалось удалить пользователя: сервер не отвечает', true, 6000);
-            },
+                this.showTransientStatus('Не удалось удалить пользователя', true, 6000);
+            }
         });
     }
 
-    cancel() {
-        if (this.isNewRecord()) {
-            // Просто отрезаем последний добавленный элемент черновика
-            this.usersResource.value.update((current) => (current ? current.slice(0, -1) : []));
-        }
-        this.resetForm();
+    handleSearch(query: string) {
+        this.page.set(1);
+        this.search.set(query);
     }
 
-    onSearch(event: Event) {
-        const input = event.target as HTMLInputElement;
-        this.search.set(input.value);
+    handleSort(event: { sort: 'name' | 'age'; direction: 'asc' | 'desc' | null; }) {
+        this.page.set(1);
+        this.sort.set(event.sort);
+        this.sortDirection.set(event.direction);
     }
 
-    sort(column: 'name' | 'age') {
-        if (this.sortColumn() !== column) {
-            this.sortColumn.set(column);
-            this.sortDirection.set('asc');
-            return;
-        }
-
-        switch (this.sortDirection()) {
-            case null:
-                this.sortDirection.set('asc');
-                break;
-
-            case 'asc':
-                this.sortDirection.set('desc');
-                break;
-
-            case 'desc':
-                this.sortDirection.set(null);
-                break;
-        }
+    refreshData() {
+        this.usersResource.reload();
     }
 
     private showTransientStatus(message: string, errorStatus: boolean, duration: number = 3000) {
@@ -182,17 +102,10 @@ export class App {
         this.statusMessage.set(message);
 
         setTimeout(() => {
-            // Проверяем, совпадает ли текущее сообщение с тем, что мы планировали удалить
-            // Это защитит от ситуации, когда одно уведомление перебивает другое
             if (this.statusMessage() === message) {
                 this.statusMessage.set('');
                 this.isError.set(false);
             }
         }, duration);
-    }
-
-    private resetForm() {
-        this.editedUser.set(null);
-        this.isNewRecord.set(false);
     }
 }

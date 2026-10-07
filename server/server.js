@@ -1,8 +1,9 @@
 const crypto = require('crypto');
 const express = require('express');
+const fs = require('fs');
 
-// условная база данных
-const users = [
+// условная база данных npm install express@~5.2.1 и node server.js
+const usersTEMP = [
   { _id: crypto.randomUUID(), name: 'Tom', age: 22 },
   { _id: crypto.randomUUID(), name: 'Bob', age: 44 },
   { _id: crypto.randomUUID(), name: 'Sam', age: 28 },
@@ -20,6 +21,8 @@ const users = [
   { _id: crypto.randomUUID(), name: 'Robert', age: 46 },
 ];
 
+const users = JSON.parse(fs.readFileSync('./data/users.json', 'utf8'));
+
 const app = express();
 app.use(express.json());
 
@@ -33,7 +36,51 @@ app.use((req, res, next) => {
 
 app.get('/', async (_, res) => res.send('Hello world!'));
 
-app.get('/api/users', async (_, res) => res.send(users));
+// app.get('/api/users', async (_, res) => res.send(users));
+
+
+function sortUsers(users, sort, direction) {
+  if (!sort || !direction) {
+    return users;
+  }
+
+  return [...users].sort((a, b) => {
+
+    if (sort === 'name') {
+      return direction === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    }
+
+    if (sort === 'age') {
+      return direction === 'asc' ? a.age - b.age : b.age - a.age;
+    }
+
+    return 0;
+  });
+}
+
+app.get('/api/users', async (req, res) => {
+  const page = Number(req.query.page);
+  const size = Number(req.query.size);
+  const search = String(req.query.search ?? '').trim().toLowerCase();
+  const sort = req.query.sort;
+  const direction = req.query.direction;
+  const filteredUsers = search ? users.filter(user => user.name.toLowerCase().includes(search)) : users;
+  const start = (page - 1) * size;
+  const end = start + size;
+  //const pageUsers = filteredUsers.slice(start, end);
+
+  const sortedUsers = sortUsers(filteredUsers, sort, direction);
+  const pageUsers = sortedUsers.slice(start, end);
+
+  res.send({
+    content: pageUsers,
+    page,
+    size,
+    totalElements: filteredUsers.length,
+    totalPages: Math.ceil(filteredUsers.length / size)
+  });
+
+});
 
 app.get('/api/users/:id', async (req, res) => {
   const id = req.params.id;

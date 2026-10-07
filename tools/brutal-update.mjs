@@ -134,33 +134,35 @@ async function main() {
     // Шаг 1: Читаем package.json
     const packageJson = JSON.parse(await readFile('package.json', 'utf-8'));
 
-    // Шаг 2: Беспощадно переписываем ВСЕ ключевые зависимости Angular и ядра
-    console.log('📝 Пересобираю дерево зависимостей в package.json...');
-
-    const dependenciesToUpdate = [
-        '@angular/common', '@angular/compiler', '@angular/core',
-        '@angular/forms', '@angular/platform-browser', '@angular/router'
-    ];
-
-    const devDependenciesToUpdate = [
-        '@angular/build', '@angular/cli', '@angular/compiler-cli'
-    ];
+    // Шаг 2: Брутально вылавливаем И ВСЕ пакеты @angular/* и выравниваем их
+    console.log('📝 Автоматически выравниваю ВСЕ пакеты @angular/* под версию', latestAngular);
 
     packageJson.dependencies = packageJson.dependencies || {};
     packageJson.devDependencies = packageJson.devDependencies || {};
 
-    for (const pkg of dependenciesToUpdate) {
-        packageJson.dependencies[pkg] = `^${latestAngular}`;
+    // Динамически обновляем все пакеты Angular в секции dependencies
+    for (const pkg of Object.keys(packageJson.dependencies)) {
+        // Если пакет начинается с @angular/, но это НЕ @angular/fire (у него своя ветка версий)
+        if (pkg.startsWith('@angular/') && pkg !== '@angular/fire') {
+            packageJson.dependencies[pkg] = `^${latestAngular}`;
+            console.log(`   [dep] ${pkg} -> ^${latestAngular}`);
+        }
     }
 
-    for (const pkg of devDependenciesToUpdate) {
-        packageJson.devDependencies[pkg] = `^${latestAngular}`;
+    // Динамически обновляем все пакеты Angular в секции devDependencies
+    for (const pkg of Object.keys(packageJson.devDependencies)) {
+        if (pkg.startsWith('@angular/')) {
+            packageJson.devDependencies[pkg] = `^${latestAngular}`;
+            console.log(`   [dev] ${pkg} -> ^${latestAngular}`);
+        }
     }
 
-    // Выравниваем сопутствующий стек, иначе проект 16/17 версии никогда не соберется
+    // Выравниваем сопутствующий стек (rxjs, vitest, tslib и т.д.)
     packageJson.dependencies['rxjs'] = targetRxjs;
     packageJson.dependencies['tslib'] = targetTslib;
     packageJson.devDependencies['typescript'] = targetTypescript;
+    packageJson.devDependencies['jsdom'] = targetJsdom;
+    packageJson.devDependencies['vitest'] = targetVitest;
 
     // Если в проекте были старые тесты на Карма/Жасмин, вычищаем их и даем современный Vitest + Jsdom
     if (packageJson.devDependencies['karma'] || packageJson.devDependencies['jasmine-core']) {
@@ -193,11 +195,12 @@ async function main() {
 
     if (!dryRun) {
         // Шаг 3: Полная аннигиляция старого кэша и блокировок
-        console.log('🗑️ Уничтожаю node_modules и package-lock.json...');
+        console.log('🗑️ Уничтожаю node_modules, package-lock.json и кэш .angular...');
         await rm('node_modules', { recursive: true, force: true });
+        await rm('.angular', { recursive: true, force: true });
         await rm('package-lock.json', { force: true });
 
-        // Исправлено: Добавили await, чтобы сборщик строго дождался перестройки конфигурации
+        // Патчим angular.json под новую схему Angular
         await patchAngularJson();
 
         // Шаг 4: Сохраняем обновленный package.json

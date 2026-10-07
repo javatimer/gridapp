@@ -1,0 +1,16 @@
+<div class="counter-box">
+    <p>
+        Current value: <strong>{{ count() }}</strong>
+    </p>
+
+    @if (isEven()) {
+    <p>Even</p>
+    } @else {
+    <p>Odd</p>
+    }
+
+    <div class="counter-actions">
+        <button (click)="decrement()">Minus (-)</button>
+        <button (click)="increment()">Plus (+)</button>
+    </div>
+</div>

@@ -1,0 +1,125 @@
+<!-- Если есть ошибка — показываем ТОЛЬКО её -->
+@if (isResourceError()) {
+<div class="error-box">
+  <strong>Ошибка подключения!</strong> Не удалось связаться с сервером (localhost:3000).
+  <button class="retry-btn" (click)="retry.emit()">Повторить попытку</button>
+</div>
+}
+
+<!-- Если ошибки нет, показываем основную рабочую область -->
+@if (!isResourceError()) {
+<p>
+  <button class="add-button" (click)="addUser()" [disabled]="isLoading() || editedUser() !== null">Добавить</button>
+</p>
+
+<p>
+  <input class="search-input" [value]="search()" (input)="onSearch($event)" placeholder="Поиск пользователей..." />
+</p>
+
+@if (isLoading()) {
+<p>Загрузка данных с сервера...</p>
+}
+
+<table>
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th (click)="sort('name')" style="cursor: pointer;">
+        Имя @if (sortColumn() === 'name' && sortDirection()) { {{ sortDirection() === 'asc' ? '↑' : '↓' }} }
+      </th>
+      <th (click)="sort('age')" style="cursor: pointer;">
+        Возраст @if (sortColumn() === 'age' && sortDirection()) { {{ sortDirection() === 'asc' ? '↑' : '↓' }} }
+      </th>
+      <th>Действия</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (user of users(); track user._id || user) {
+    <tr>
+      @if (isEditing(user)) {
+      <td>{{ user._id || 'Новый' }}</td>
+      <td><input [(ngModel)]="editedUser()!.name" #nameInput="ngModel" required placeholder="Введите имя" /></td>
+      <td><input type="number" [(ngModel)]="editedUser()!.age" #ageInput="ngModel" required min="1"
+          placeholder="Возраст" /></td>
+      <td>
+        <button (click)="onSave()" [disabled]="nameInput.invalid || ageInput.invalid">Сохранить</button>
+        <button (click)="cancel()">Отмена</button>
+      </td>
+      } @else {
+      <td>{{ user._id }}</td>
+      <td>{{ user.name }}</td>
+      <td>{{ user.age }}</td>
+      <td>
+        <button (click)="editUser(user)" [disabled]="editedUser() !== null">Изменить</button>
+        <button (click)="onDelete(user)" [disabled]="editedUser() !== null">Удалить</button>
+      </td>
+      }
+    </tr>
+    } @empty {
+    @if (!isLoading()) {
+    <tr>
+      <td colspan="4" style="text-align: center; color: #94a3b8;">Пользователи не найдены</td>
+    </tr>
+    }
+    }
+  </tbody>
+</table>
+@if (totalPages() > 1) {
+<div class="pagination">
+  <button (click)="pageChange.emit(currentPage() - 1)" [disabled]="currentPage() === 1">
+    ← Назад
+  </button>
+
+  <span>
+    Страница {{ currentPage() }} из {{ totalPages() }}
+  </span>
+
+  <button (click)="nextPage()" [disabled]="currentPage() === totalPages()">
+    Вперёд →
+  </button>
+</div>
+}
+
+<p>Всего пользователей: <strong>{{ totalElements() }}</strong></p>
+
+<!-- Модальное окно для добавления нового пользователя Glass Liquid -->
+@if (newUser()) {
+<div class="modal-backdrop">
+
+  <!-- Анимированный жидкий фон за модальным окном -->
+  <div class="liquid-bg">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="modal" cdkDrag>
+
+    <div class="modal-header" cdkDragHandle>
+      <div class="window-controls">
+        <!-- Добавили клик на иконку закрытия для удобства -->
+        <span class="control close" (click)="cancel()"></span>
+        <span class="control minimize"></span>
+        <span class="control maximize"></span>
+      </div>
+
+      <span class="modal-title">Новый пользователь</span>
+    </div>
+
+    <div class="modal-content">
+      <input [(ngModel)]="newUser()!.name" #nameInput="ngModel" required placeholder="Введите имя" />
+
+      <input type="number" [(ngModel)]="newUser()!.age" #ageInput="ngModel" required min="1" placeholder="Возраст" />
+
+      <div class="modal-actions">
+        <button class="btn-save" (click)="saveNewUser()"
+          [disabled]="nameInput.invalid || ageInput.invalid">Сохранить</button>
+        <button class="btn-cancel" (click)="cancel()">Отмена</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+}
+
+}

@@ -1,254 +1,73 @@
-:host {
-  --primary-color: #4f46e5;
-  --primary-hover: #4338ca;
-  --danger-color: #ef4444;
-  --danger-hover: #dc2626;
-  --bg-color: #f8fafc;
-  --card-bg: #ffffff;
-  --text-color: #1e293b;
-  --border-color: #e2e8f0;
-  --success-color: #16a34a;
-}
-
 h1 {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  color: var(--text-color);
-  font-size: 1.8rem;
-  margin-bottom: 1.5rem;
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
+    color: var(--text-color);
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
 }
 
-button {
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: white;
-  color: var(--text-color);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-button:hover:not([disabled]) {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
-}
-
-button[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Главная кнопка "Добавить" сверху таблицы */
 h1+button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
 }
 
 h1+button:hover:not([disabled]) {
-  background-color: var(--primary-hover);
+    background-color: var(--primary-hover);
 }
 
-.add-button {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
-}
+/* Status Box */
 
-.add-button:hover:not([disabled]) {
-  background-color: var(--primary-hover);
-}
-
-/* Кнопка "Удалить" в режиме чтения */
-td button+button {
-  color: var(--danger-color);
-  border-color: #fecaca;
-}
-
-td button+button:hover:not([disabled]) {
-  background-color: #fef2f2;
-  border-color: var(--danger-color);
-}
-
-/* Кнопка "Сохранить" (первая кнопка в ячейке редактирования) */
-td button:first-of-type {
-  background-color: #f1f5f9;
-}
-
-/* Если строка в режиме редактирования, делаем кнопку "Сохранить" яркой */
-tr:has(input:not([disabled])) td button:first-of-type {
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-}
-
-tr:has(input:not([disabled])) td button:first-of-type:hover {
-  background-color: var(--primary-hover);
-}
-
-table {
-  width: 100%;
-  max-width: 1000px;
-  border-collapse: collapse;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  background-color: var(--card-bg);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--border-color);
-  margin-bottom: 1.5rem;
-}
-
-th {
-  background-color: #f1f5f9;
-  color: #475569;
-  font-weight: 600;
-  text-align: left;
-  padding: 0.85rem 1rem;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  border-bottom: 2px solid var(--border-color);
-}
-
-td {
-  padding: 0.85rem 1rem;
-  color: var(--text-color);
-  font-size: 0.95rem;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: middle;
-}
-
-tbody tr:hover {
-  background-color: #f8fafc;
-}
-
-/* Стилизация длинного ID */
-td:first-child {
-  font-family: monospace;
-  font-size: 0.85rem;
-  color: #64748b;
-  max-width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-td:first-child:hover {
-  white-space: normal;
-  word-break: break-all;
-}
-
-input {
-  width: 100%;
-  padding: 0.4rem 0.6rem;
-  font-family: inherit;
-  font-size: 0.95rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-input[readonly] {
-  background-color: #f1f5f9;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.search-input {
-  width: 100%;
-  max-width: 1000px;
-}
-
-/* Подсветка невалидных полей, которые пользователь уже затронул или они пустые */
-input.ng-invalid.ng-touched {
-  border-color: var(--danger-color);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-td:last-child {
-  display: flex;
-  gap: 0.5rem;
+.status-container {
+    height: 48px;
 }
 
 .status-box {
-  display: inline-block;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
-  font-size: 0.95rem;
-  color: var(--success-color);
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  padding: 0.75rem 1.25rem;
-  border-radius: 6px;
-  font-weight: 500;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    display: inline-block;
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
+    font-size: 0.95rem;
+    color: var(--success-color);
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
 }
 
 .error-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  /* Разносит текст и кнопку по краям */
-  max-width: 1000px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: var(--danger-color);
-  padding: 0.85rem 1.25rem;
-  border-radius: 6px;
-  margin-bottom: 1.5rem;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1000px;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: var(--danger-color);
+    padding: 0.85rem 1.25rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
 }
 
-.retry-btn {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.85rem;
-  background-color: #ffffff;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
-  font-weight: 500;
-}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
 
-.retry-btn:hover {
-  background-color: #fef2f2;
-  border-color: #b91c1c;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
