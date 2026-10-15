@@ -8,11 +8,13 @@ export class UserService {
   private readonly http = inject(HttpClient);
   private readonly url = 'http://localhost:8080/user';
 
-  getUsers(page: number, size: number, search: string) {
+  getUsers(page: number,size: number,search: string,sort: string = 'id',direction: string = 'asc') {
     const params = new HttpParams()
       .set('page', page)
       .set('size', size)
-      .set('search', search);
+      .set('search', search)
+      .set('sort', sort)
+      .set('direction', direction);
 
     return this.http.get<UserPage>(this.url, { params });
   }

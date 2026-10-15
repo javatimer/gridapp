@@ -16,6 +16,9 @@ export class UserTable {
   pageChange = output<number>();
   totalElements = input.required<number>();
 
+  sort = input<'id' | 'name' | 'age'>('id');
+  direction = input<'asc' | 'desc'>('asc');
+
   users = input.required<User[]>();
   isLoading = input<boolean>(false);
   isResourceError = input<boolean>(false);
@@ -31,8 +34,8 @@ export class UserTable {
   editedUser = signal<User | null>(null);
 
   sortChange = output<{
-    sort: 'name' | 'age';
-    direction: 'asc' | 'desc' | null;
+    sort: 'id' | 'name' | 'age';
+    direction: 'asc' | 'desc';
   }>();
 
   /*
@@ -125,6 +128,15 @@ export class UserTable {
     if (!user) return;
     this.save.emit(user);
     this.newUser.set(null);
+  }
+
+  onSort(field: 'id' | 'name' | 'age') {
+    const nextDirection = this.sort() === field && this.direction() === 'asc' ? 'desc' : 'asc';
+
+    this.sortChange.emit({
+      sort: field,
+      direction: nextDirection
+    });
   }
 
   onDelete(user: User) {

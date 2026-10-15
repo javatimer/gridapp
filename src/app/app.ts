@@ -2,13 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { UserService } from './user.service';
 import { User } from './model/user';
-import { Counter } from './counter/counter';
 import { UserTable } from './user-table/user-table';
 
 @Component({
     selector: 'my-app',
     standalone: true,
-    imports: [Counter, UserTable],
+    imports: [UserTable],
     templateUrl: './app.html',
     styleUrl: './app.css'
 })
@@ -19,14 +18,26 @@ export class App {
     pageSize = 5;
     search = signal('');
 
-    usersResource = rxResource({ // rxResource следит за этими сигналами
+    sort = signal<'id' | 'name' | 'age'>('id');
+    direction = signal<'asc' | 'desc'>('asc');
+
+    usersResource = rxResource({
         params: () => ({
             page: this.page(),
             size: this.pageSize,
-            search: this.search()
+            search: this.search(),
+            sort: this.sort(),
+            direction: this.direction()
         }),
 
-        stream: ({ params }) => this.userService.getUsers(params.page,params.size,params.search)
+        stream: ({ params }) =>
+            this.userService.getUsers(
+                params.page,
+                params.size,
+                params.search,
+                params.sort,
+                params.direction
+            )
     });
 
     users = computed(() => this.usersResource.hasValue() ? this.usersResource.value().content : []);
@@ -73,6 +84,17 @@ export class App {
     handleSearch(query: string) {
         this.page.set(1);
         this.search.set(query);
+    }
+
+    handleSort(field: 'id' | 'name' | 'age') {
+        if (this.sort() === field) {
+            this.direction.update(current => current === 'asc' ? 'desc' : 'asc');
+        } else {
+            this.sort.set(field);
+            this.direction.set('asc');
+        }
+
+        this.page.set(1);
     }
 
     refreshData() {

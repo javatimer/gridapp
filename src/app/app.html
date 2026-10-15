@@ -61,7 +61,7 @@
             <app-user-table [users]="users()" [isLoading]="isLoading()" [isResourceError]="isResourceError()"
                 [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="totalElements()" [search]="search()"
                 (pageChange)="page.set($event)" (save)="handleSave($event)" (delete)="handleDelete($event)"
-                (retry)="refreshData()" (searchChange)="handleSearch($event)" />
+                (retry)="refreshData()" (searchChange)="handleSearch($event)" [sort]="sort()" [direction]="direction()" (sortChange)="handleSort($event.sort)" />
         </section>
 
         <footer class="footer">

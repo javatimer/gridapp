@@ -802,3 +802,26 @@ td:last-child {
         padding: 12px 10px;
     }
 }
+
+.sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sort-button span {
+    color: #6478e8;
+    font-weight: 700;
+}
+
+.sort-button:hover {
+    color: #6478e8;
+}
