@@ -18,27 +18,15 @@ export class App {
     page = signal(1);
     pageSize = 5;
     search = signal('');
-    sort = signal<'name' | 'age'>('name');
-    sortDirection = signal<'asc' | 'desc' | null>(null);
 
     usersResource = rxResource({ // rxResource следит за этими сигналами
         params: () => ({
             page: this.page(),
             size: this.pageSize,
-            search: this.search(),
-            sort: this.sort(),
-            direction: this.sortDirection()
+            search: this.search()
         }),
 
-        stream: ({ params }) => {
-            return this.userService.getUsers(
-                params.page,
-                params.size,
-                params.search,
-                params.sort,
-                params.direction
-            );
-        },
+        stream: ({ params }) => this.userService.getUsers(params.page,params.size,params.search)
     });
 
     users = computed(() => this.usersResource.hasValue() ? this.usersResource.value().content : []);
@@ -51,16 +39,16 @@ export class App {
     isError = signal(false);
 
     handleSave(userToSave: User) {
-        const request$ = userToSave._id === '' ? this.userService.createUser(userToSave) : this.userService.updateUser(userToSave);
+        const request$ = userToSave.id == null ? this.userService.createUser(userToSave) : this.userService.updateUser(userToSave);
 
         request$.subscribe({
             next: () => {
                 this.showTransientStatus('Данные успешно сохранены', false);
                 this.usersResource.reload();
             },
-
-            error: () => {
-                this.showTransientStatus('Ошибка при сохранении: сервер недоступен', true, 6000);
+            error: (error) => {
+                console.error('Ошибка сохранения:', error);
+                this.showTransientStatus('Ошибка при сохранении', true, 6000);
             }
         });
     }
@@ -70,7 +58,7 @@ export class App {
 
         if (!confirmed) return;
 
-        this.userService.deleteUser(user._id).subscribe({
+        this.userService.deleteUser(user.id!).subscribe({
             next: () => {
                 this.showTransientStatus('Данные успешно удалены', false);
                 this.usersResource.reload();
@@ -85,12 +73,6 @@ export class App {
     handleSearch(query: string) {
         this.page.set(1);
         this.search.set(query);
-    }
-
-    handleSort(event: { sort: 'name' | 'age'; direction: 'asc' | 'desc' | null; }) {
-        this.page.set(1);
-        this.sort.set(event.sort);
-        this.sortDirection.set(event.direction);
     }
 
     refreshData() {

@@ -26,7 +26,8 @@
             ],
             "styles": [
               "src/styles.css"
-            ]
+            ],
+            "polyfills": []
           },
           "configurations": {
             "production": {
@@ -46,7 +47,6 @@
             },
             "development": {
               "optimization": false,
-              "extractLicenses": false,
               "sourceMap": true
             }
           },
@@ -63,9 +63,6 @@
             }
           },
           "defaultConfiguration": "development"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test"
         }
       }
     }

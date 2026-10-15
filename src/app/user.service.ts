@@ -1,37 +1,37 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { User } from './model/user';
 import { UserPage } from './model/user-page';
 
 @Service()
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly url = 'http://localhost:3000/api/users';
+  private readonly url = 'http://localhost:8080/user';
 
-  //getUsers() {return this.http.get<User[]>(this.url);}
+  getUsers(page: number, size: number, search: string) {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size)
+      .set('search', search);
 
-  getUsers(page: number, size: number, search: string, sort: string, direction: string | null) {
-    return this.http.get<UserPage>(this.url, {
-      params: {
-        page,
-        size,
-        search,
-        sort,
-        direction: direction ?? ''
-      }
-    });
+    return this.http.get<UserPage>(this.url, { params });
   }
 
   createUser(user: User) {
-    // HttpClient сам сериализует объект в JSON и ставит Content-Type
-    return this.http.post<User>(this.url, user);
+    return this.http.post<User>(this.url, {
+      name: user.name,
+      age: user.age
+    });
   }
 
   updateUser(user: User) {
-    return this.http.put<User>(this.url, user);
+    return this.http.put<User>(`${this.url}/${user.id}`, {
+      name: user.name,
+      age: user.age
+    });
   }
 
-  deleteUser(id: string) {
-    return this.http.delete<User>(`${this.url}/${id}`);
+  deleteUser(id: number) {
+    return this.http.delete<void>(`${this.url}/${id}`);
   }
 }

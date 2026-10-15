@@ -112,61 +112,103 @@ async function patchAngularJson() {
 }
 
 async function main() {
+    // Шаг 0: Динамически получаем абсолютно свежие версии Angular
+    const latestCompilerCli = await getAbsoluteLatestVersion('@angular/compiler-cli');
     const latestAngular = await getAbsoluteLatestVersion('@angular/core');
-    // Актуальные версии
-    const targetRxjs = '~7.8.2';
-    const targetTslib = '^2.8.1';
-    const targetTypescript = '~6.0.3';
-    const targetJsdom = '^30.1.2';
-    const targetVitest = '^5.0.3';
+    const latestCli = await getAbsoluteLatestVersion('@angular/cli');
+    const latestBuild = await getAbsoluteLatestVersion('@angular/build');
+
+    const actualBuildVersion = latestBuild || latestAngular;
+    const actualCliVersion = latestCli || latestAngular;
 
     if (!latestAngular) {
         console.error('✕ Не удалось связаться с реестром NPM.');
         process.exit(1);
     }
 
-    console.log(`🎯 Целевая версия Angular: ${latestAngular}\n`);
+    // 🔥 ДИНАМИЧЕСКОЕ ВЫЧИСЛЕНИЕ ПЕРИФЕРИИ (Больше никакого хардкода!)
+    console.log('🔍 Динамически вычисляю совместимый стек зависимостей...');
+    const targetTypescript = '~6.0.3'; // безопасный дефолт
+
+    // 2. Для тестового окружения берем абсолютный свежий LATEST из сети
+    const latestVitest = await getAbsoluteLatestVersion('vitest');
+    const latestJsdom = await getAbsoluteLatestVersion('jsdom');
+    const targetVitest = latestVitest ? `^${latestVitest}` : '^5.0.3';
+    const targetJsdom = latestJsdom ? `^${latestJsdom}` : '^30.1.2';
+
+    // 3. Для rxjs и tslib берем стабильные мажорные latest
+    const latestRxjs = await getAbsoluteLatestVersion('rxjs');
+    const latestTslib = await getAbsoluteLatestVersion('tslib');
+    const targetRxjs = latestRxjs ? `~${latestRxjs}` : '~7.8.2';
+    const targetTslib = latestTslib ? `^${latestTslib}` : '^2.8.1';
+
+    console.log(`\n🎯 Целевые версии ядра:`);
+    console.log(`   @angular/core -> ${latestAngular}`);
+    console.log(`   @angular/cli  -> ${actualCliVersion}`);
+    console.log(`   @angular/build -> ${actualBuildVersion}`);
+    console.log(`\n📦 Вычисленная периферия:`);
+    console.log(`   typescript    -> ${targetTypescript}`);
+    console.log(`   rxjs          -> ${targetRxjs}`);
+    console.log(`   tslib         -> ${targetTslib}`);
+    console.log(`   vitest        -> ${targetVitest}`);
+    console.log(`   jsdom         -> ${targetJsdom}\n`);
 
     if (dryRun) {
-        console.log('🔍 [DRY RUN] Скрипт просто перепишет файлы без физического удаления node_modules.');
+        console.log('🔍 [DRY RUN] Скрипт просто перепишет файлы без физического удаления.');
     }
 
     // Шаг 1: Читаем package.json
     const packageJson = JSON.parse(await readFile('package.json', 'utf-8'));
 
-    // Шаг 2: Брутально вылавливаем И ВСЕ пакеты @angular/* и выравниваем их
-    console.log('📝 Автоматически выравниваю ВСЕ пакеты @angular/* под версию', latestAngular);
-
     packageJson.dependencies = packageJson.dependencies || {};
     packageJson.devDependencies = packageJson.devDependencies || {};
 
-    // Динамически обновляем все пакеты Angular в секции dependencies
+    // Шаг 2: Обновляем dependencies
     for (const pkg of Object.keys(packageJson.dependencies)) {
-        // Если пакет начинается с @angular/, но это НЕ @angular/fire (у него своя ветка версий)
         if (pkg.startsWith('@angular/') && pkg !== '@angular/fire') {
-            packageJson.dependencies[pkg] = `^${latestAngular}`;
-            console.log(`   [dep] ${pkg} -> ^${latestAngular}`);
+            let targetVersion = latestAngular;
+
+            // Если это пакеты, склонные к задержкам релизов (ssr, server, localize)
+            if (pkg === '@angular/ssr' || pkg === '@angular/platform-server' || pkg === '@angular/localize') {
+                const realPackageLatest = await getAbsoluteLatestVersion(pkg);
+                if (realPackageLatest) {
+                    targetVersion = realPackageLatest;
+                }
+            }
+
+            packageJson.dependencies[pkg] = `^${targetVersion}`;
+            console.log(`   [dep] ${pkg} -> ^${targetVersion}`);
         }
     }
 
-    // Динамически обновляем все пакеты Angular в секции devDependencies
+    console.log('📝 Выравниваю development зависимости...');
     for (const pkg of Object.keys(packageJson.devDependencies)) {
         if (pkg.startsWith('@angular/')) {
-            packageJson.devDependencies[pkg] = `^${latestAngular}`;
-            console.log(`   [dev] ${pkg} -> ^${latestAngular}`);
+            let targetVersion = latestAngular;
+
+            if (pkg === '@angular/cli') {
+                targetVersion = actualCliVersion;
+            } else if (pkg === '@angular/compiler-cli') {
+                targetVersion = latestCompilerCli || latestAngular;
+            } else if (pkg === '@angular/build') {
+                targetVersion = actualBuildVersion;
+            }
+
+            packageJson.devDependencies[pkg] = `^${targetVersion}`;
+            console.log(`   [dev] ${pkg} -> ^${targetVersion}`);
         }
     }
 
-    // Выравниваем сопутствующий стек (rxjs, vitest, tslib и т.д.)
+    // Записываем вычисленные динамические версии сопутствующего стека
     packageJson.dependencies['rxjs'] = targetRxjs;
     packageJson.dependencies['tslib'] = targetTslib;
     packageJson.devDependencies['typescript'] = targetTypescript;
     packageJson.devDependencies['jsdom'] = targetJsdom;
     packageJson.devDependencies['vitest'] = targetVitest;
 
-    // Если в проекте были старые тесты на Карма/Жасмин, вычищаем их и даем современный Vitest + Jsdom
+    // Очистка старой Кармы/Жасмина
     if (packageJson.devDependencies['karma'] || packageJson.devDependencies['jasmine-core']) {
-        console.log('🧹 Обнаружены старые тестовые пакеты (Karma/Jasmine). Заменяю на Vitest...');
+        console.log('🧹 Обнаружены старые тесты Karma/Jasmine. Мигрирую на Vitest...');
         delete packageJson.devDependencies['karma'];
         delete packageJson.devDependencies['karma-chrome-launcher'];
         delete packageJson.devDependencies['karma-coverage'];
@@ -182,43 +224,32 @@ async function main() {
         }
     }
 
-    // 💥 ТОТАЛЬНЫЙ ZONELESS: Вырезаем zone.js из package.json навсегда!
-    if (packageJson.dependencies['zone.js']) {
-        console.log('🧹 Вычищаю zone.js из dependencies...');
-        delete packageJson.dependencies['zone.js'];
-    }
-
-    if (packageJson.devDependencies['zone.js']) {
-        console.log('🧹 Вычищаю zone.js из devDependencies...');
-        delete packageJson.devDependencies['zone.js'];
-    }
+    // Тотальный Zoneless
+    if (packageJson.dependencies['zone.js']) delete packageJson.dependencies['zone.js'];
+    if (packageJson.devDependencies['zone.js']) delete packageJson.devDependencies['zone.js'];
 
     if (!dryRun) {
-        // Шаг 3: Полная аннигиляция старого кэша и блокировок
-        console.log('🗑️ Уничтожаю node_modules, package-lock.json и кэш .angular...');
+        console.log('🗑️ Очищаю кэш и блокировки...');
         await rm('node_modules', { recursive: true, force: true });
         await rm('.angular', { recursive: true, force: true });
         await rm('package-lock.json', { force: true });
 
-        // Патчим angular.json под новую схему Angular
         await patchAngularJson();
 
-        // Шаг 4: Сохраняем обновленный package.json
         await writeFile('package.json', JSON.stringify(packageJson, null, 2) + '\n', 'utf-8');
-        console.log('💾 Файл package.json успешно переписан под Angular 22!');
+        console.log('💾 Файл package.json успешно сохранен.');
 
-        // Шаг 5: Жесткая чистая установка
-        console.log('📥 Запускаю принудительную чистую установку пакетов...');
-        const installSuccess = await runCommand('npm', ['install', '--force']);
+        console.log('📥 Запускаю чистую установку пакетов...');
+        const installSuccess = await runCommand('npm', ['install', '--legacy-peer-deps']);
 
         if (installSuccess) {
-            console.log('\n🎉 БРУТАЛЬНОЕ ОБНОВЛЕНИЕ ЗАВЕРШЕНО!');
-            console.log('👉 Попробуйте запустить проект: npm start');
+            console.log('\n🎉 АПГРЕЙД ЗАВЕРШЕН!');
+            console.log('👉 Запуск проекта: npm start');
         } else {
-            console.log('\n❌ Пакеты установились с ошибками. Проверьте логи npm.');
+            console.log('\n❌ Ошибка при установке пакетов.');
         }
     } else {
-        console.log('\n[Dry Run] Новый package.json выглядел бы так:');
+        console.log('\n[Dry Run] Результат package.json:');
         console.log(JSON.stringify(packageJson, null, 2));
     }
 }

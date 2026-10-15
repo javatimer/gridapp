@@ -1,21 +1,72 @@
-<div style="padding: 20px;">
-    <!-- Вызов компонента Counter -->
-    <app-counter></app-counter>
+<div class="dashboard">
+    <header class="topbar">
+        <a class="brand" href="/">
+            <span class="brand-icon">G</span>
+            <span>Grid<span class="brand-accent">App</span></span>
+        </a>
 
-    <hr style="margin: 30px 0;" />
+        <div class="topbar-info">
+            <span class="status-dot"></span>
+            <span>Система управления пользователями</span>
+        </div>
+    </header>
 
-    <div class="status-container">
-        <!-- Индивидуальные всплывающие статусы при удалении/сохранении -->
+    <main class="main-content">
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">WORKSPACE / USERS</p>
+                <h1>Пользователи</h1>
+                <p class="subtitle">
+                    Управление пользователями и их данными
+                </p>
+            </div>
+
+            <div class="server-status">
+                <span class="status-dot"></span>
+                API подключён
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <article class="stat-card">
+                <div class="stat-icon users-icon">♙</div>
+                <p>Всего пользователей</p>
+                <strong>{{ totalElements() }}</strong>
+                <span class="stat-note">Записей в базе данных</span>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon page-icon">▤</div>
+                <p>Текущая страница</p>
+                <strong>{{ page() }} <span class="of-pages">/ {{ totalPages() }}</span></strong>
+                <span class="stat-note">Постраничная навигация</span>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon database-icon">◈</div>
+                <p>На этой странице</p>
+                <strong>{{ users().length }}</strong>
+                <span class="stat-note">Загружено записей</span>
+            </article>
+        </section>
+
         @if (statusMessage()) {
-        <div [class.error-box]="isError()" [class.status-box]="!isError()">
+        <div class="status-message" [class.error-box]="isError()" [class.success-box]="!isError()">
+            <span>{{ isError() ? '!' : '✓' }}</span>
             {{ statusMessage() }}
         </div>
         }
-    </div>
 
-    <!-- Передаем состояние rxResource внутрь таблицы -->
-    <app-user-table [users]="users()" [isLoading]="isLoading()" [isResourceError]="isResourceError()"
-        [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="totalElements()" [search]="search()"
-        (pageChange)="page.set($event)" (save)="handleSave($event)" (delete)="handleDelete($event)"
-        (retry)="refreshData()" (searchChange)="handleSearch($event)" (sortChange)="handleSort($event)" />
+        <section class="workspace">
+            <app-user-table [users]="users()" [isLoading]="isLoading()" [isResourceError]="isResourceError()"
+                [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="totalElements()" [search]="search()"
+                (pageChange)="page.set($event)" (save)="handleSave($event)" (delete)="handleDelete($event)"
+                (retry)="refreshData()" (searchChange)="handleSearch($event)" />
+        </section>
+
+        <footer class="footer">
+            <span>GridApp</span>
+            <span>Angular · Grails · PostgreSQL</span>
+        </footer>
+    </main>
 </div>

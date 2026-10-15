@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed, effect } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CdkDrag, CdkDragHandle } from '@angular/cdk/drag-drop';
 import { User } from '../model/user';
@@ -29,9 +29,6 @@ export class UserTable {
 
   newUser = signal<User | null>(null);
   editedUser = signal<User | null>(null);
-
-  sortColumn = signal<'name' | 'age'>('name');
-  sortDirection = signal<'asc' | 'desc' | null>(null);
 
   sortChange = output<{
     sort: 'name' | 'age';
@@ -96,27 +93,13 @@ export class UserTable {
     this.searchChange.emit(input.value);
   }
 
-  sort(column: 'name' | 'age') {
-    if (this.sortColumn() !== column) {
-      this.sortColumn.set(column);
-      this.sortDirection.set('asc');
-    } else {
-      this.sortDirection.update(dir => dir === null ? 'asc' : dir === 'asc' ? 'desc' : null);
-    }
-
-    this.sortChange.emit({
-      sort: this.sortColumn(),
-      direction: this.sortDirection()
-    });
-  }
-
   addUser() {
-    this.newUser.set({ _id: '', name: '', age: 0 });
+    this.newUser.set({ name: '', age: 0 });
   }
 
   editUser(user: User) {
     this.editedUser.set({
-      _id: user._id,
+      id: user.id,
       name: user.name,
       age: user.age
     });
@@ -127,7 +110,7 @@ export class UserTable {
 
     if (!currentEdit) return false;
 
-    return currentEdit === user || currentEdit._id === user._id;
+    return currentEdit === user || (currentEdit.id != null && currentEdit.id === user.id);
   }
 
   onSave() {

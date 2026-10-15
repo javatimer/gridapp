@@ -61,3 +61,17 @@ npm install express@~5.1.0
 ```bash
 node server.js
 ```
+
+Обновляем глобально
+
+```bash
+npm install -g @angular/cli@latest
+npm install -g npm@latest
+ng version
+```
+
+Обновляем проект
+
+```bash
+ng update @angular/core @angular/cli
+```
