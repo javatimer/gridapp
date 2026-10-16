@@ -3,6 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { UserService } from './user.service';
 import { User } from './model/user';
 import { UserTable } from './user-table/user-table';
+import { catchError, exhaustMap, of, switchMap, timeout, timer, map } from 'rxjs';
 
 @Component({
     selector: 'my-app',
@@ -39,6 +40,43 @@ export class App {
                 params.direction
             )
     });
+
+    appInfoResource = rxResource({
+        stream: () => this.userService.getAppInfo()
+    });
+
+    databaseResource = rxResource({
+        stream: () =>
+            timer(0, 10_000).pipe(
+                exhaustMap(() => {
+                    const startedAt = Date.now();
+
+                    return this.userService.getDatabaseHealth()
+                        .pipe(
+                            timeout({ first: 5_000 }),
+
+                            map(db => ({
+                                ...db,
+                                checkedAt: new Date(),
+                                responseTimeMs: Date.now() - startedAt
+                            })),
+
+                            catchError(() =>
+                                of({
+                                    connected: false,
+                                    database: null,
+                                    version: null,
+                                    checkedAt: new Date(),
+                                    responseTimeMs: Date.now() - startedAt
+                                })
+                            )
+                        );
+                })
+            )
+    });
+
+    appInfo = computed(() => this.appInfoResource.hasValue() ? this.appInfoResource.value() : null);
+    databaseHealth = computed(() => this.databaseResource.hasValue() ? this.databaseResource.value() : null);
 
     users = computed(() => this.usersResource.hasValue() ? this.usersResource.value().content : []);
     isLoading = computed(() => this.usersResource.isLoading());

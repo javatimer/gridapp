@@ -50,6 +50,120 @@
             </article>
         </section>
 
+        @if (appInfo(); as info) {
+        <section class="backend-card">
+            <div class="backend-card-header">
+                <div>
+                    <span class="backend-eyebrow">BACKEND</span>
+                    <h2>Grails Application</h2>
+                    <p>{{ info.message }}</p>
+                </div>
+
+                <span class="backend-status"><span class="status-dot"></span>Connected</span>
+            </div>
+
+            <div class="backend-versions">
+                <div class="backend-version">
+                    <span>Grails</span>
+                    <strong>{{ info.grailsversion }}</strong>
+                </div>
+                <div class="backend-version">
+                    <span>Groovy</span>
+                    <strong>{{ info.groovyversion }}</strong>
+                </div>
+                <div class="backend-version">
+                    <span>JVM</span>
+                    <strong>{{ info.jvmversion }}</strong>
+                </div>
+                <div class="backend-version">
+                    <span>Environment</span>
+                    <strong>{{ info.environment }}</strong>
+                </div>
+                <div class="backend-version">
+                    <span>Application version</span>
+                    <strong>{{ info.appversion }}</strong>
+                </div>
+                <div class="backend-version">
+                    <span>Reloading agent</span>
+                    <strong>{{ info.reloadingagentenabled ? 'Enabled' : 'Disabled' }}</strong>
+                </div>
+            </div>
+
+            <div class="backend-footer">
+                <span>Controllers: <strong>{{ info.artefacts.controllers }}</strong></span>
+                <span>Domains: <strong>{{ info.artefacts.domains }}</strong></span>
+                <span>Services: <strong>{{ info.artefacts.services }}</strong></span>
+            </div>
+
+            <details class="plugins-section">
+                <summary>
+                    <span>Controllers</span>
+                    <span class="plugins-count">{{ info.controllers.length }} controllers</span>
+                </summary>
+
+                <div class="plugins-list">
+                    @for (controller of info.controllers; track controller.name) {
+                    <div class="plugin-item">
+                        <span class="plugin-name">{{ controller.name }}</span>
+                        <span class="plugin-version">{{ controller.logicalPropertyName }}</span>
+                    </div>
+                    }
+                </div>
+            </details>
+
+            <details class="plugins-section">
+                <summary>
+                    <span>Installed Plugins</span>
+                    <span class="plugins-count">{{ info.plugins.length }} plugins</span>
+                </summary>
+
+                <div class="plugins-list">
+                    @for (plugin of info.plugins; track plugin.name) {
+                    <div class="plugin-item">
+                        <span class="plugin-name">{{ plugin.name }}</span>
+                        <span class="plugin-version">{{ plugin.version }}</span>
+                    </div>
+                    }
+                </div>
+            </details>
+        </section>
+        }
+
+        @if (databaseHealth(); as db) {
+        <section class="backend-card database-card">
+            <div class="backend-card-header">
+                <div>
+                    <span class="backend-eyebrow">DATABASE</span>
+                    <h2>Database Health</h2>
+                    <p>{{ db.database ?? 'Database information unavailable' }}</p>
+                </div>
+
+                <span class="backend-status" [class.database-offline]="!db.connected">
+                    <span class="status-dot"></span>{{ db.connected ? 'Connected' : 'Unavailable' }}
+                </span>
+            </div>
+
+            <div class="backend-versions">
+                <div class="backend-version">
+                    <span>Database engine</span>
+                    <strong>{{ db.database ?? 'Unknown' }}</strong>
+                </div>
+
+                <div class="backend-version">
+                    <span>Server version</span>
+                    <strong>{{ db.version ?? 'Unknown' }}</strong>
+                </div>
+            </div>
+            <div class="backend-footer database-metrics">
+                <span>Last checked: <strong>{{ db.checkedAt.toLocaleTimeString() }}</strong></span>
+
+                <span>Response time: <strong>{{ db.responseTimeMs }} ms</strong></span>
+
+                <span>Next check: <strong>within 10 sec</strong></span>
+            </div>
+        </section>
+        }
+
         @if (statusMessage()) {
         <div class="status-message" [class.error-box]="isError()" [class.success-box]="!isError()">
             <span>{{ isError() ? '!' : '✓' }}</span>
@@ -61,7 +175,8 @@
             <app-user-table [users]="users()" [isLoading]="isLoading()" [isResourceError]="isResourceError()"
                 [currentPage]="page()" [totalPages]="totalPages()" [totalElements]="totalElements()" [search]="search()"
                 (pageChange)="page.set($event)" (save)="handleSave($event)" (delete)="handleDelete($event)"
-                (retry)="refreshData()" (searchChange)="handleSearch($event)" [sort]="sort()" [direction]="direction()" (sortChange)="handleSort($event.sort)" />
+                (retry)="refreshData()" (searchChange)="handleSearch($event)" [sort]="sort()" [direction]="direction()"
+                (sortChange)="handleSort($event.sort)" />
         </section>
 
         <footer class="footer">
