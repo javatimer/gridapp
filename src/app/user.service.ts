@@ -4,6 +4,7 @@ import { User } from './model/user';
 import { UserPage } from './model/user-page';
 import { AppInfo } from './model/app-info';
 import { DatabaseHealth } from './model/database-health';
+import { ApiHealth } from './model/api-health';
 
 @Service()
 export class UserService {
@@ -45,5 +46,10 @@ export class UserService {
 
   getDatabaseHealth() {
     return this.http.get<DatabaseHealth>('http://localhost:8080/application/database');
+  }
+
+  getApiHealth() {
+    return this.http.get<ApiHealth>('http://localhost:8080/application/health'
+    );
   }
 }

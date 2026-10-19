@@ -75,8 +75,38 @@ export class App {
             )
     });
 
+    apiResource = rxResource({
+        stream: () =>
+            timer(0, 10_000).pipe(
+                exhaustMap(() => {
+                    const startedAt = Date.now();
+
+                    return this.userService.getApiHealth().pipe(
+                        timeout({ first: 5_000 }),
+
+                        map(api => ({
+                            ...api,
+                            available: api.status === 'UP',
+                            checkedAt: new Date(),
+                            responseTimeMs: Date.now() - startedAt
+                        })),
+
+                        catchError(() =>
+                            of({
+                                status: 'DOWN',
+                                available: false,
+                                checkedAt: new Date(),
+                                responseTimeMs: Date.now() - startedAt
+                            })
+                        )
+                    );
+                })
+            )
+    });
+
     appInfo = computed(() => this.appInfoResource.hasValue() ? this.appInfoResource.value() : null);
     databaseHealth = computed(() => this.databaseResource.hasValue() ? this.databaseResource.value() : null);
+    apiHealth = computed(() => this.apiResource.hasValue() ? this.apiResource.value() : null);
 
     users = computed(() => this.usersResource.hasValue() ? this.usersResource.value().content : []);
     isLoading = computed(() => this.usersResource.isLoading());

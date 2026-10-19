@@ -164,6 +164,40 @@
         </section>
         }
 
+        @if (apiHealth(); as api) {
+        <section class="backend-card">
+            <div class="backend-card-header">
+                <div>
+                    <span class="backend-eyebrow">BACKEND API</span>
+                    <h2>API Health</h2>
+                    <p>Grails application availability</p>
+                </div>
+
+                <span class="backend-status" [class.database-offline]="!api.available">
+                    <span class="status-dot"></span>
+                    {{ api.available ? 'Available' : 'Unavailable' }}
+                </span>
+            </div>
+
+            <div class="backend-versions">
+                <div class="backend-version">
+                    <span>API status</span>
+                    <strong>{{ api.status }}</strong>
+                </div>
+
+                <div class="backend-version">
+                    <span>Response time</span>
+                    <strong>{{ api.responseTimeMs }} ms</strong>
+                </div>
+            </div>
+
+            <div class="backend-footer database-metrics">
+                <span>Last checked: <strong>{{ api.checkedAt.toLocaleTimeString() }}</strong></span>
+                <span>Next check: <strong>within 10 sec</strong></span>
+            </div>
+        </section>
+        }
+
         @if (statusMessage()) {
         <div class="status-message" [class.error-box]="isError()" [class.success-box]="!isError()">
             <span>{{ isError() ? '!' : '✓' }}</span>
